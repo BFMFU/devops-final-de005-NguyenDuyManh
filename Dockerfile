@@ -9,13 +9,16 @@
 FROM gradle:9.0.0-jdk-alpine AS builder
 WORKDIR /workspace
 
-# Copy build.gradle + settings.gradle trước, tải dependency để tận dụng cache layer
-COPY build.gradle settings.gradle ./
-RUN ./gradlew --no-daemon build -x test || true
 
-# Copy mã nguồn rồi đóng gói file JAR (bỏ qua test)
+COPY build.gradle settings.gradle ./
+RUN ./gradlew build -x test || true
+
+# Cho phép chạy lệnh để build file JAR, bỏ qua test (nếu có lỗi test thì vẫn build được) bằng cách chạy lệnh
+
 COPY src ./src
-RUN ./gradlew clean bootJarar
+RUN chmod +x ./gradlew && ./gradlew clean bootJar --no-daemon -x test
+
+
 
 
 # ---------- Stage 2: runtime - chỉ chứa JRE 21 + file JAR ----------
@@ -23,7 +26,7 @@ FROM eclipse-temurin:21-jre-alpine AS runtime
 
 # Phiên bản ứng dụng truyền vào lúc build (docker compose: build-arg APP_VERSION)
 ARG APP_VERSION=dev
-ENV APP_VERSION=local \
+ENV APP_VERSION=${APP_VERSION} \
     JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75"
 
 WORKDIR /app

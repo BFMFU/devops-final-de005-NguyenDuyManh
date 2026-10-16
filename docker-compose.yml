@@ -9,11 +9,12 @@
 name: ${COMPOSE_PROJECT_NAME:?Chua dien COMPOSE_PROJECT_NAME trong student.env}
 
 services:
-  # ---------------------------------------------------------------- MySQL (CÓ SẴN)
   mysql:
     image: mysql:8.0
     restart: unless-stopped
     command: ["--character-set-server=utf8mb4", "--collation-server=utf8mb4_unicode_ci"]
+    # TODO 0: đọc các biến MYSQL_DATABASE, MYSQL_USER, MYSQL_PASSWORD, MYSQL_ROOT_PASSWORD từ student.env
+
     environment:
       MYSQL_DATABASE: ${MYSQL_DATABASE}
       MYSQL_USER: ${MYSQL_USER}
@@ -39,11 +40,12 @@ services:
     build:
       context: .
       args:
-        APP_VERSION: ${APP_VERSION:local}
+        APP_VERSION: build-arg APP_VERSION=${APP_VERSION:-local}
     # TODO 2: tên image = <APP_IMAGE>:<APP_TAG>
     #         (mặc định APP_IMAGE=devops-final-app, APP_TAG=latest)
     image: ${APP_IMAGE:-devops-final-app}:${APP_TAG:-latest}
     restart: unless-stopped
+    env_file: student.env
     environment:
       DB_HOST: mysql
       DB_PORT: "3306"
